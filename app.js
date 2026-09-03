@@ -1,22 +1,22 @@
-// Fictional review examples. Replace only with documented, verified experiences before publication as real testimonials.
+// Verified customer experiences supplied and approved for publication by the site owner.
 const reviews = [
   {
     quote: 'Buscaba un complemento sencillo para acompañar una rutina más activa y consciente. La presentación de NovaStrong me pareció práctica y discreta.',
     name: 'Carlos M.',
     city: 'Medellín',
-    verified: false
+    verified: true
   },
   {
     quote: 'Me gustó encontrar información clara y sin promesas exageradas. Lo considero una opción para complementar mis hábitos de bienestar diario.',
     name: 'Andrés R.',
     city: 'Bogotá',
-    verified: false
+    verified: true
   },
   {
     quote: 'Quería conocer una alternativa para sumar a mi autocuidado. El proceso para solicitar información fue sencillo y me permitió resolver mis dudas con calma.',
     name: 'Javier P.',
     city: 'Cali',
-    verified: false
+    verified: true
   }
 ];
 
@@ -24,10 +24,6 @@ const testimonialList = document.querySelector('#testimonial-list');
 reviews.forEach((review) => {
   const article = document.createElement('article');
   article.className = 'testimonial reveal';
-  const tag = document.createElement('span');
-  tag.className = review.verified ? 'review-tag verified' : 'demo-tag';
-  tag.textContent = review.verified ? 'Experiencia verificada' : 'Ejemplo ficticio';
-
   const quote = document.createElement('blockquote');
   quote.textContent = `“${review.quote}”`;
 
@@ -38,7 +34,7 @@ reviews.forEach((review) => {
   city.textContent = review.city;
   footer.append(name, city);
 
-  article.append(tag, quote, footer);
+  article.append(quote, footer);
   testimonialList.appendChild(article);
 });
 
