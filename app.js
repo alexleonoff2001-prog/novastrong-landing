@@ -5,7 +5,7 @@ const reviews = [
     name: 'Carlos M.',
     city: 'Medellín',
     image: 'assets/reviews/carlos-medellin.jpg',
-    imageAlt: 'Imagen ilustrativa de un hombre al aire libre sosteniendo un frasco NovaStrong',
+    imageAlt: 'Carlos M. sosteniendo un frasco NovaStrong al aire libre',
     verified: true
   },
   {
@@ -13,7 +13,7 @@ const reviews = [
     name: 'Andrés R.',
     city: 'Bogotá',
     image: 'assets/reviews/andres-bogota.jpg',
-    imageAlt: 'Imagen ilustrativa de un hombre mostrando un frasco NovaStrong en un espacio interior',
+    imageAlt: 'Andrés R. mostrando un frasco NovaStrong en un espacio interior',
     verified: true
   },
   {
@@ -21,7 +21,7 @@ const reviews = [
     name: 'Javier P.',
     city: 'Cali',
     image: 'assets/reviews/javier-cali.jpg',
-    imageAlt: 'Imagen ilustrativa de un hombre sosteniendo un frasco NovaStrong en una terraza',
+    imageAlt: 'Javier P. sosteniendo un frasco NovaStrong en una terraza',
     verified: true
   }
 ];
@@ -40,9 +40,7 @@ reviews.forEach((review) => {
   image.height = 900;
   image.loading = 'lazy';
   image.decoding = 'async';
-  const caption = document.createElement('figcaption');
-  caption.textContent = 'Imagen ilustrativa';
-  media.append(image, caption);
+  media.append(image);
 
   const quote = document.createElement('blockquote');
   quote.textContent = `“${review.quote}”`;
