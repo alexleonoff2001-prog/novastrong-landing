@@ -1,15 +1,44 @@
-// Reviews are intentionally marked as demo content until verified experiences are supplied.
+// Fictional review examples. Replace only with documented, verified experiences before publication as real testimonials.
 const reviews = [
-  { quote: 'Texto de demostración — reemplazar por una experiencia verificada antes de publicar.', name: 'Nombre abreviado', city: 'Ciudad por confirmar' },
-  { quote: 'Texto de demostración — reemplazar por una experiencia verificada antes de publicar.', name: 'Nombre abreviado', city: 'Ciudad por confirmar' },
-  { quote: 'Texto de demostración — reemplazar por una experiencia verificada antes de publicar.', name: 'Nombre abreviado', city: 'Ciudad por confirmar' }
+  {
+    quote: 'Buscaba un complemento sencillo para acompañar una rutina más activa y consciente. La presentación de NovaStrong me pareció práctica y discreta.',
+    name: 'Carlos M.',
+    city: 'Medellín',
+    verified: false
+  },
+  {
+    quote: 'Me gustó encontrar información clara y sin promesas exageradas. Lo considero una opción para complementar mis hábitos de bienestar diario.',
+    name: 'Andrés R.',
+    city: 'Bogotá',
+    verified: false
+  },
+  {
+    quote: 'Quería conocer una alternativa para sumar a mi autocuidado. El proceso para solicitar información fue sencillo y me permitió resolver mis dudas con calma.',
+    name: 'Javier P.',
+    city: 'Cali',
+    verified: false
+  }
 ];
 
 const testimonialList = document.querySelector('#testimonial-list');
 reviews.forEach((review) => {
   const article = document.createElement('article');
   article.className = 'testimonial reveal';
-  article.innerHTML = `<span class="demo-tag">Contenido provisional</span><blockquote>“${review.quote}”</blockquote><footer><strong>${review.name}</strong><span>${review.city}</span></footer>`;
+  const tag = document.createElement('span');
+  tag.className = review.verified ? 'review-tag verified' : 'demo-tag';
+  tag.textContent = review.verified ? 'Experiencia verificada' : 'Ejemplo ficticio';
+
+  const quote = document.createElement('blockquote');
+  quote.textContent = `“${review.quote}”`;
+
+  const footer = document.createElement('footer');
+  const name = document.createElement('strong');
+  const city = document.createElement('span');
+  name.textContent = review.name;
+  city.textContent = review.city;
+  footer.append(name, city);
+
+  article.append(tag, quote, footer);
   testimonialList.appendChild(article);
 });
 
