@@ -4,18 +4,24 @@ const reviews = [
     quote: 'Buscaba un complemento sencillo para acompañar una rutina más activa y consciente. La presentación de NovaStrong me pareció práctica y discreta.',
     name: 'Carlos M.',
     city: 'Medellín',
+    image: 'assets/reviews/carlos-medellin.jpg',
+    imageAlt: 'Imagen ilustrativa de un hombre al aire libre sosteniendo un frasco NovaStrong',
     verified: true
   },
   {
     quote: 'Me gustó encontrar información clara y sin promesas exageradas. Lo considero una opción para complementar mis hábitos de bienestar diario.',
     name: 'Andrés R.',
     city: 'Bogotá',
+    image: 'assets/reviews/andres-bogota.jpg',
+    imageAlt: 'Imagen ilustrativa de un hombre mostrando un frasco NovaStrong en un espacio interior',
     verified: true
   },
   {
     quote: 'Quería conocer una alternativa para sumar a mi autocuidado. El proceso para solicitar información fue sencillo y me permitió resolver mis dudas con calma.',
     name: 'Javier P.',
     city: 'Cali',
+    image: 'assets/reviews/javier-cali.jpg',
+    imageAlt: 'Imagen ilustrativa de un hombre sosteniendo un frasco NovaStrong en una terraza',
     verified: true
   }
 ];
@@ -24,6 +30,20 @@ const testimonialList = document.querySelector('#testimonial-list');
 reviews.forEach((review) => {
   const article = document.createElement('article');
   article.className = 'testimonial reveal';
+
+  const media = document.createElement('figure');
+  media.className = 'testimonial-media';
+  const image = document.createElement('img');
+  image.src = review.image;
+  image.alt = review.imageAlt;
+  image.width = 900;
+  image.height = 900;
+  image.loading = 'lazy';
+  image.decoding = 'async';
+  const caption = document.createElement('figcaption');
+  caption.textContent = 'Imagen ilustrativa';
+  media.append(image, caption);
+
   const quote = document.createElement('blockquote');
   quote.textContent = `“${review.quote}”`;
 
@@ -34,7 +54,7 @@ reviews.forEach((review) => {
   city.textContent = review.city;
   footer.append(name, city);
 
-  article.append(quote, footer);
+  article.append(media, quote, footer);
   testimonialList.appendChild(article);
 });
 
