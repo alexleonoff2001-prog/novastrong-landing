@@ -96,10 +96,31 @@ dialog.addEventListener('click', (event) => { if (event.target === dialog) dialo
 const form = document.querySelector('#lead-form');
 const status = document.querySelector('#form-status');
 const submitButton = form.querySelector('[type="submit"]');
+const marketingConsentField = form.elements.namedItem('marketingConsent');
 let firstInteractionAt = 0;
 let hasStarted = false;
 let isSubmitting = false;
 let lastSubmission = { fingerprint: '', time: 0 };
+
+const updateMarketingConsent = () => {
+  if (!window.ShortlMeta) return false;
+  return window.ShortlMeta.consent(marketingConsentField.checked === true);
+};
+
+marketingConsentField.addEventListener('change', updateMarketingConsent);
+
+const trackConfirmedLead = async (leadId) => {
+  if (!marketingConsentField.checked) return;
+  if (!window.ShortlMeta) throw new Error('ShortlMeta no está disponible.');
+  updateMarketingConsent();
+  const eventId = `lead-${leadId}`;
+  try {
+    await window.ShortlMeta.track('Lead', { eventId });
+  } catch (firstError) {
+    await new Promise((resolve) => window.setTimeout(resolve, 750));
+    await window.ShortlMeta.track('Lead', { eventId });
+  }
+};
 
 const fingerprint = (value) => {
   let hash = 0;
@@ -133,6 +154,19 @@ form.addEventListener('submit', async (event) => {
   const honeypotField = form.elements.namedItem('website');
   const name = nameField.value.trim().replace(/\s+/g, ' ');
   const phone = phoneField.value.replace(/\D/g, '');
+  const country = form.elements.namedItem('country').value;
+  const query = new URLSearchParams(window.location.search);
+  const attribution = {
+    utmSource: query.get('utm_source') || '',
+    utmMedium: query.get('utm_medium') || '',
+    utmCampaign: query.get('utm_campaign') || '',
+    utmCampaignId: query.get('utm_id') || '',
+    utmTerm: query.get('utm_term') || '',
+    utmContent: query.get('utm_content') || '',
+    metaAdsetId: query.get('meta_adset_id') || '',
+    metaAdId: query.get('meta_ad_id') || '',
+    metaPlacement: query.get('meta_placement') || ''
+  };
   let firstInvalid = null;
   if (name.length < 3 || !/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/.test(name)) { showError('name', 'Ingresa tu nombre completo (mínimo 3 caracteres).'); firstInvalid ||= nameField; }
   if (phone.length < 7 || phone.length > 15) { showError('phone', 'Ingresa un número válido de 7 a 15 dígitos.'); firstInvalid ||= phoneField; }
@@ -144,13 +178,48 @@ form.addEventListener('submit', async (event) => {
   if (currentFingerprint === lastSubmission.fingerprint && Date.now() - lastSubmission.time < 300000) { status.textContent = 'Esta solicitud ya fue procesada recientemente en esta sesión.'; status.className = 'form-status error'; return; }
   emitEvent('envio_formulario');
   isSubmitting = true; submitButton.disabled = true; submitButton.classList.add('is-loading');
-  await new Promise((resolve) => window.setTimeout(resolve, 650));
-  // DEMO INTEGRATION POINT: replace this delay with an authorized HTTPS POST to your backend/CRM.
-  lastSubmission = { fingerprint: currentFingerprint, time: Date.now() };
-  isSubmitting = false; submitButton.disabled = false; submitButton.classList.remove('is-loading');
-  status.innerHTML = '¡Gracias! Recibimos tu solicitud. Un asesor se comunicará contigo.<br><small>Modo demostración: tus datos no fueron transmitidos ni almacenados.</small>';
-  status.className = 'form-status success';
-  emitEvent('formulario_exitoso', { modo: 'demostracion' });
+  try {
+    const response = await fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        name,
+        phone,
+        country,
+        consent: consentField.checked,
+        marketingConsent: marketingConsentField.checked,
+        website: honeypotField.value,
+        startedAt: firstInteractionAt,
+        page: `${window.location.pathname}${window.location.hash}`,
+        attribution
+      })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || 'No fue posible enviar la solicitud.');
+
+    lastSubmission = { fingerprint: currentFingerprint, time: Date.now() };
+    const marketingConsentGranted = marketingConsentField.checked;
+    if (marketingConsentGranted && result.leadId) {
+      try {
+        await trackConfirmedLead(result.leadId);
+      } catch (trackingError) {
+        console.warn('No se pudo registrar el evento Lead en Shortl.', trackingError);
+        emitEvent('tracking_error', { proveedor: 'shortl', evento: 'Lead' });
+      }
+    }
+    form.reset();
+    if (marketingConsentGranted && window.ShortlMeta) window.ShortlMeta.consent(false);
+    status.textContent = '¡Gracias! Recibimos tu solicitud. Un asesor se comunicará contigo.';
+    status.className = 'form-status success';
+    emitEvent('formulario_exitoso');
+  } catch (error) {
+    status.textContent = error.message === 'duplicate'
+      ? 'Esta solicitud ya fue procesada recientemente.'
+      : 'No pudimos enviar tu solicitud. Inténtalo nuevamente en unos minutos.';
+    status.className = 'form-status error';
+  } finally {
+    isSubmitting = false; submitButton.disabled = false; submitButton.classList.remove('is-loading');
+  }
 });
 
 document.querySelector('#year').textContent = new Date().getFullYear();
