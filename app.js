@@ -97,10 +97,39 @@ const form = document.querySelector('#lead-form');
 const status = document.querySelector('#form-status');
 const submitButton = form.querySelector('[type="submit"]');
 const marketingConsentField = form.elements.namedItem('marketingConsent');
+const submissionLockKey = 'novastrong_lead_submitted_v1';
+const submissionLockCookie = 'novastrong_lead_submitted';
+const submissionLockDuration = 24 * 60 * 60 * 1000;
 let firstInteractionAt = 0;
 let hasStarted = false;
 let isSubmitting = false;
 let lastSubmission = { fingerprint: '', time: 0 };
+
+const saveSubmissionLock = () => {
+  try { window.localStorage.setItem(submissionLockKey, String(Date.now())); } catch (_) { /* Storage may be unavailable. */ }
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `${submissionLockCookie}=1; Max-Age=86400; Path=/; SameSite=Lax${secure}`;
+};
+
+const hasActiveSubmissionLock = () => {
+  const cookieIsActive = document.cookie.split(';').some((item) => item.trim() === `${submissionLockCookie}=1`);
+  if (cookieIsActive) return true;
+  try {
+    const submittedAt = Number(window.localStorage.getItem(submissionLockKey));
+    if (Number.isFinite(submittedAt) && Date.now() - submittedAt < submissionLockDuration) return true;
+    window.localStorage.removeItem(submissionLockKey);
+  } catch (_) { /* Continue without persistence when storage is unavailable. */ }
+  return false;
+};
+
+const lockSubmittedForm = () => {
+  form.classList.add('is-submitted');
+  form.querySelectorAll('input, select, button').forEach((control) => { control.disabled = true; });
+  status.textContent = 'Solicitud recibida. Ya no necesitas enviar tus datos otra vez. Espera el contacto de un asesor.';
+  status.className = 'form-status success submitted-message';
+  status.setAttribute('tabindex', '-1');
+  status.focus({ preventScroll: true });
+};
 
 const updateMarketingConsent = () => {
   if (!window.ShortlMeta) return false;
@@ -209,17 +238,24 @@ form.addEventListener('submit', async (event) => {
     }
     form.reset();
     if (marketingConsentGranted && window.ShortlMeta) window.ShortlMeta.consent(false);
-    status.textContent = '¡Gracias! Recibimos tu solicitud. Un asesor se comunicará contigo.';
-    status.className = 'form-status success';
+    saveSubmissionLock();
+    lockSubmittedForm();
     emitEvent('formulario_exitoso');
   } catch (error) {
-    status.textContent = error.message === 'duplicate'
-      ? 'Esta solicitud ya fue procesada recientemente.'
-      : 'No pudimos enviar tu solicitud. Inténtalo nuevamente en unos minutos.';
-    status.className = 'form-status error';
+    if (error.message === 'duplicate') {
+      saveSubmissionLock();
+      lockSubmittedForm();
+    } else {
+      status.textContent = 'No pudimos enviar tu solicitud. Inténtalo nuevamente en unos minutos.';
+      status.className = 'form-status error';
+    }
   } finally {
-    isSubmitting = false; submitButton.disabled = false; submitButton.classList.remove('is-loading');
+    isSubmitting = false;
+    if (!form.classList.contains('is-submitted')) submitButton.disabled = false;
+    submitButton.classList.remove('is-loading');
   }
 });
+
+if (hasActiveSubmissionLock()) lockSubmittedForm();
 
 document.querySelector('#year').textContent = new Date().getFullYear();

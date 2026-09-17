@@ -10,6 +10,8 @@ python3 -m http.server 4173
 
 El formulario envía un `POST` a `/api/leads`. La función `functions/api/leads.js` valida la solicitud, crea o valida la estructura de la pestaña configurada y añade el lead mediante Google Sheets API. Requiere estas variables en Cloudflare Pages:
 
+Después de una recepción exitosa, el navegador oculta y desactiva el formulario durante 24 horas y muestra un mensaje para esperar el contacto del asesor. El bloqueo persiste al recargar la página; una respuesta de duplicado del servidor activa el mismo estado.
+
 - `GOOGLE_SERVICE_ACCOUNT_EMAIL`
 - `GOOGLE_PRIVATE_KEY_BASE64` (secreto)
 - `GOOGLE_SHEET_ID`
